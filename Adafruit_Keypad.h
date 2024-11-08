@@ -4,6 +4,7 @@
 #include "Adafruit_Keypad_Ringbuffer.h"
 #include "Arduino.h"
 #include <string.h>
+#include "Shifty.h"
 
 #define makeKeymap(x) ((byte *)x) ///< cast the passed key characters to bytes
 
@@ -33,7 +34,7 @@ union keypadEvent {
 class Adafruit_Keypad {
 public:
   Adafruit_Keypad(byte *userKeymap, byte *row, byte *col, int numRows,
-                  int numCols);
+                  int numCols, Shifty *_shift = new Shifty());
   ~Adafruit_Keypad();
   void begin();
 
@@ -48,6 +49,7 @@ public:
   void clear();
 
 private:
+  Shifty* _shift;
   byte *_userKeymap;
   byte *_row;
   byte *_col;

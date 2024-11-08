@@ -1,4 +1,5 @@
 #include "Adafruit_Keypad.h"
+#include "Shifty.h"
 
 #define _KEY_PRESSED_POS (1)
 #define _KEY_PRESSED (1UL << _KEY_PRESSED_POS)
@@ -10,6 +11,8 @@
 #define _JUST_RELEASED (1UL << _JUST_RELEASED_POS)
 
 #define _KEYPAD_SETTLING_DELAY 20
+
+Shifty shift;
 
 /**************************************************************************/
 /*!
@@ -24,12 +27,13 @@
 */
 /**************************************************************************/
 Adafruit_Keypad::Adafruit_Keypad(byte *userKeymap, byte *row, byte *col,
-                                 int numRows, int numCols) {
+                                 int numRows, int numCols, Shifty *shift) {
   _userKeymap = userKeymap;
   _row = row;
   _col = col;
   _numRows = numRows;
   _numCols = numCols;
+  _shift = shift;
 
   _keystates = NULL;
 }
@@ -68,16 +72,16 @@ volatile byte *Adafruit_Keypad::getKeyState(byte key) {
 void Adafruit_Keypad::tick() {
   uint8_t evt;
   for (int i = 0; i < _numCols; i++) {
-    digitalWrite(_col[i], HIGH);
+    _shift->writeBit(_col[i], HIGH);
   }
 
   int i = 0;
   for (int c = 0; c < _numCols; c++) {
-    digitalWrite(_col[c], LOW);
+    _shift->writeBit(_col[c], LOW);
     delayMicroseconds(_KEYPAD_SETTLING_DELAY);
     for (int r = 0; r < _numRows; r++) {
       i = r * _numCols + c;
-      bool pressed = !digitalRead(_row[r]);
+      bool pressed = !_shift->readBit(_row[r]);
       // Serial.print((int)pressed);
       volatile byte *state = _keystates + i;
       byte currentState = *state;
@@ -100,7 +104,7 @@ void Adafruit_Keypad::tick() {
       *state = currentState;
     }
     // Serial.println("");
-    digitalWrite(_col[c], HIGH);
+    _shift->writeBit(_col[c], HIGH);
   }
 }
 
@@ -114,12 +118,12 @@ void Adafruit_Keypad::begin() {
   memset((void *)_keystates, 0, _numRows * _numCols);
 
   for (int i = 0; i < _numCols; i++) {
-    pinMode(_col[i], OUTPUT);
-    digitalWrite(_col[i], HIGH);
+    _shift->setBitMode(_col[i], OUTPUT);
+    _shift->writeBit(_col[i], HIGH);
   }
 
   for (int i = 0; i < _numRows; i++) {
-    pinMode(_row[i], INPUT_PULLUP);
+    _shift->setBitMode(_row[i], INPUT_PULLUP);
   }
 }
 
